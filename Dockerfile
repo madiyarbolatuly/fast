@@ -1,64 +1,45 @@
-# Используем базовый образ Python
+# Use a base image that supports installing Chrome (e.g., python:3.9-slim)
 FROM python:3.9-slim
 
-# Устанавливаем системные зависимости
+WORKDIR /app
+
+COPY requirements.txt .
+
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
-    fonts-liberation \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libatspi2.0-0 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
+    unzip \
+    libgconf-2-4 \
     libnss3 \
-    libpango-1.0-0 \
-    libx11-6 \
-    libxcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxrandr2 \
-    xdg-utils \
-    --no-install-recommends
+    libxss1 \
+    libappindicator1 \
+    libayatana-appindicator3-1 \
+    fonts-liberation \
+    libasound2
 
-# Устанавливаем Chrome
+# Add the Google signing key and repository
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
 
-# Устанавливаем ChromeDriver
-RUN CHROME_VERSION=$(google-chrome --version | cut -d ' ' -f3 | cut -d '.' -f1) \
-    && CHROMEDRIVER_VERSION=$(wget -qO- https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}) \
-    && wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip \
+# Install Google Chrome Stable
+RUN apt-get update && apt-get install -y google-chrome-stable
+
+# Verify Chrome installation (optional)
+RUN google-chrome-stable --version
+
+# Install chromedriver
+RUN wget -O /tmp/chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.98/linux64/chromedriver-linux64.zip \
     && unzip /tmp/chromedriver.zip -d /usr/bin/ \
+    && mv /usr/bin/chromedriver-linux64/chromedriver /usr/bin/chromedriver \
     && chmod +x /usr/bin/chromedriver \
-    && rm /tmp/chromedriver.zip
+    && rm -rf /usr/bin/chromedriver-linux64 /tmp/chromedriver.zip
 
-# Настраиваем рабочую директорию
-WORKDIR /app
-
-# Копируем зависимости
-COPY requirements.txt .
-
-# Устанавливаем Python зависимости
+# Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем исходный код
+# Copy the rest of the application code into the container
 COPY . .
 
-# Создаем директории для файлов
-RUN mkdir -p /app/uploads /app/outputs
-
-# Запускаем приложение
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "main:app"]
+# Set the command to run your application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]

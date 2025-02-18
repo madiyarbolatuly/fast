@@ -4,7 +4,6 @@ import re
 import time
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -30,7 +29,6 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Selenium configuration
 chrome_options = Options()
