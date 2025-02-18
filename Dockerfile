@@ -1,45 +1,28 @@
-# Use a base image that supports installing Chrome (e.g., python:3.9-slim)
-FROM python:3.9-slim
+# Use official Python 3.10 image as base
+FROM python:3.10-slim
 
+# Set the working directory inside the container to the "app" folder
 WORKDIR /app
 
-COPY requirements.txt .
+# Copy the requirements file from the "app" folder and install dependencies
+COPY requirements.txt /app/
 
-# Install dependencies
+# Install system dependencies for AWS Ubuntu
 RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    unzip \
-    libgconf-2-4 \
-    libnss3 \
-    libxss1 \
-    libappindicator1 \
-    libayatana-appindicator3-1 \
-    fonts-liberation \
-    libasound2
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Add the Google signing key and repository
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+# Install Python dependencies from requirements.txt
+RUN pip install -r requirements.txt
 
-# Install Google Chrome Stable
-RUN apt-get update && apt-get install -y google-chrome-stable
+# Copy the entire "app" folder contents to the container
+COPY app/ /app/
 
-# Verify Chrome installation (optional)
-RUN google-chrome-stable --version
+# Expose port 8080 for the application
+EXPOSE 8080
 
-# Install chromedriver
-RUN wget -O /tmp/chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.98/linux64/chromedriver-linux64.zip \
-    && unzip /tmp/chromedriver.zip -d /usr/bin/ \
-    && mv /usr/bin/chromedriver-linux64/chromedriver /usr/bin/chromedriver \
-    && chmod +x /usr/bin/chromedriver \
-    && rm -rf /usr/bin/chromedriver-linux64 /tmp/chromedriver.zip
-
-# Install the dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application code into the container
-COPY . .
-
-# Set the command to run your application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Command to run FastAPI app using Uvicorn, specify the module path as 'main:app'
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

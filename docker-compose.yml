@@ -1,4 +1,4 @@
-version: '3.11'
+version: '3.10'
 
 services:
   web:
@@ -8,6 +8,6 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
-    shm_size: '2gb'
+    shm_size: '6gb'
     environment:
       - PYTHONUNBUFFERED=1
