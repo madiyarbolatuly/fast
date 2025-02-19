@@ -18,11 +18,9 @@ from typing import List
 from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(
-    level=logging.,  # Set to DEBUG for detailed logs
+    
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("app.log", mode="w")  # Save logs to a file (optional)
-    ],
+
 )
 
 app = FastAPI()
