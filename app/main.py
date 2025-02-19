@@ -2,9 +2,8 @@ import os
 import logging
 import re
 import asyncio
-import time
 from fastapi import FastAPI, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -12,13 +11,19 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
-import pandas as pd
 from urllib.parse import urlparse
-from typing import Dict, List
-import uuid
+from typing import List
 from concurrent.futures import ThreadPoolExecutor
+
+logging.basicConfig(
+    level=logging.,  # Set to DEBUG for detailed logs
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("app.log", mode="w")  # Save logs to a file (optional)
+    ],
+)
 
 app = FastAPI()
 
@@ -41,15 +46,18 @@ chrome_options.add_argument("--window-size=1920x1080")
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
 
-# Thread pool for selenium operations
 executor = ThreadPoolExecutor(max_workers=4)
-
+driver_path = r"C:/Users/Madiyar/.wdm/drivers/chromedriver/win64/132.0.6834.159/chromedriver-win64/chromedriver.exe"
 # Global driver initialization
 def get_driver():
-    return webdriver.Chrome(
+    """Initialize and return a new WebDriver instance."""
+    logging.info("Initializing WebDriver instance...")
+    driver = webdriver.Chrome(
+        executable_path=driver_path,
         service=Service(ChromeDriverManager().install()),
         options=chrome_options
     )
+    return driver
 
 # Helper functions
 def clean_price(price_text: str) -> str:
