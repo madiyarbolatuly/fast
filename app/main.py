@@ -45,17 +45,22 @@ chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--window-size=1920x1080")
 chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
+chrome_options.binary_location = os.getenv("CHROME_BIN", "/usr/bin/google-chrome-stable")  # Path to Chrome binary
+
 
 executor = ThreadPoolExecutor(max_workers=4)
 
+driver = None 
+
 def get_driver():
-    """Initialize and return a new WebDriver instance."""
-    logging.info("Initializing WebDriver instance...")
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=chrome_options
-    )
-    return driver
+    global driver  # Reference the global driver variable
+    if driver is None:  # If driver is None, it means it hasn't been created yet.
+        logging.info("Initializing WebDriver instance...")
+        driver = webdriver.Chrome(  # Create a new WebDriver instance.
+            service=Service(ChromeDriverManager().install()),
+            options=chrome_options
+        )
+    return driver  
 
 # Helper functions
 def clean_price(price_text: str) -> str:
