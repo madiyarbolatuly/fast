@@ -196,12 +196,12 @@ def scrape_prices(target_url: str, query: str) -> List[str]:
 # Target URLs
 TARGET_URLS = [
     "https://220volt.kz/search?query=",  # Example of correct URL format
-    "https://elcentre.kz/site_search?search_term=",
-    "https://intant.kz/catalog/?q=",
-    "https://albion-group.kz/site_search?search_term=",
-    "https://volt.kz/#/search/",
-    "https://ekt.kz/catalog/?q=",
-    "https://nur-electro.kz/search?controller=search&s=",
+    #"https://elcentre.kz/site_search?search_term=",
+    #"https://intant.kz/catalog/?q=",
+    #"https://albion-group.kz/site_search?search_term=",
+    #"https://volt.kz/#/search/",
+    #"https://ekt.kz/catalog/?q=",
+    #"https://nur-electro.kz/search?controller=search&s=",
 ]
 
 @app.get("/", response_class=HTMLResponse)
