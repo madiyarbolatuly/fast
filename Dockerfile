@@ -29,6 +29,10 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     chromium \
     chromium-driver \
+    libxss1 \
+    libnss3 \
+    libcups2 \
+    libxrandr2 \
     && apt-get clean
 
 # Download and install Google Chrome (since Chromium might not be sufficient for all use cases)
