@@ -44,7 +44,7 @@ templates = Jinja2Templates(directory="templates")
 
 # Selenium configuration
 chrome_options = Options()
-chrome_options.binary_location = '/usr/bin/chromium-browser'  # Pointing to the Chromium binary
+chrome_options.binary_location = '/usr/bin/google-chrome-stable'  # Pointing to the Chromium binary
 #chrome_options.add_argument("--headless")
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
