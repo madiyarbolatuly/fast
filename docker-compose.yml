@@ -1,4 +1,4 @@
-version: '3.10'
+version: '3.9-slim'
 
 services:
   web:
@@ -8,6 +8,12 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./outputs:/app/outputs
-    shm_size: '6gb'
+    shm_size: '2gb'
     environment:
+      - CHROME_BIN=/usr/bin/google-chrome-stable
+      - CHROMEDRIVER_PATH=/usr/bin/chromedriver
+      - UPLOAD_FOLDER=uploads
+      - OUTPUT_FOLDER=outputs
+      - FASTAPI_HOST=0.0.0.0
+      - FASTAPI_PORT=8080
       - PYTHONUNBUFFERED=1
