@@ -32,7 +32,8 @@ app = FastAPI()
 # Configuration
 UPLOAD_FOLDER = "uploads"
 OUTPUT_FOLDER = "outputs"
-
+#os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+#os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
