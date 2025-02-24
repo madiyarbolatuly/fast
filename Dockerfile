@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     libfontconfig1 \
     fonts-liberation \
     gtk2-engines-pixbuf \
-    xfonts-cyrillic \
+    #xfonts-cyrillic \
     xfonts-100dpi \
     xfonts-75dpi \
     xfonts-base \
