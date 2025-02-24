@@ -6,6 +6,8 @@
     <title>Парсер цен - Главная</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     <style>
         :root {
             --primary-color: #2A5CAA;
@@ -267,115 +269,132 @@
 
     <div class="container">
         <div class="upload-section">
-            <form method="POST" enctype="multipart/form-data" onsubmit="showLoader()">
-                <div class="instructions">
-                    <h3>📋 Инструкция:</h3>
-                    <ol>
-                        <li>Подготовьте файл Excel с колонкой "Артикул"</li>
-                        <li>Загрузите файл через форму ниже</li>
-                        <li>Дождитесь завершения сбора данных</li>
-                        <li>Скачайте результат с собранными ценами</li>
-                    </ol>
-                </div>
-
+            <div class="instructions">
+                <h3>📋 Инструкция:</h3>
+                <ol>
+                    <li>Подготовьте файл Excel с колонкой "Артикул"</li>
+                    <li>Загрузите файл через форму ниже</li>
+                    <li>Дождитесь завершения сбора данных</li>
+                    <li>Скачайте результат с собранными ценами</li>
+                </ol>
+            </div>
+    
+            <!-- Updated form for file upload -->
+            <form method="POST" action="/upload" enctype="multipart/form-data" onsubmit="showLoader()">
                 <div id="drop-area" class="upload-box" onclick="document.getElementById('file-input').click()">
                     <i class="fas fa-file-upload"></i>
                     <h3>Перетащите файл или кликните для загрузки</h3>
                     <p>Формат .xlsx</p>
                 </div>
-                <input type="file" id="file-input" name="excel_file" accept=".xlsx" required>
-
+                <input type="file" id="file-input" name="file" accept=".xlsx" required style="display: none;">
                 <div class="error-message" id="error-message"></div>
                 <div class="loader" id="loader"></div>
-
-                <button type="submit">
-                    <i class="fas fa-play"></i>
-                    Запустить парсинг
-                </button>
+                <button type="submit">Upload</button>
             </form>
         </div>
     </div>
 
     <script>
-       function showLoader() {
+        function showLoader() {
             document.getElementById('loader').style.display = 'block';
             document.querySelector('button').disabled = true;
         }
-
+    
         function hideLoader() {
-            document.getElementById('loader').style.display = 'block';
+            document.getElementById('loader').style.display = 'none';
             document.querySelector('button').disabled = false;
         }
-
+    
         document.querySelector('form').addEventListener('submit', function(event) {
-            showLoader();
-            fetch('/', {
-                method: 'POST',
-                body: new FormData(this)
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                hideLoader();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                hideLoader();
-            });
+    event.preventDefault(); // Prevent the default form submission
+    showLoader();
 
-            event.preventDefault();
-        });
+    const formData = new FormData(this); // Create FormData object from the form
 
-        function handleFiles(files) {
-            const file = files[0];
-            const fileName = file.name;
-            const dropArea = document.getElementById('drop-area');
+    // Send the form data to the server using a POST request
+    fetch('/upload', {
+        method: 'POST',
+        body: formData // Pass the FormData with the file
+    })
+    .then(response => {
+        console.log('Response received:', response); // Log the full response to check the status and headers
 
-            if (!fileName.endsWith('.xlsx')) {
-                document.getElementById('error-message').style.display = 'block';
-                document.getElementById('error-message').innerHTML = 
-                    '❌ Ошибка: Пожалуйста, загрузите файл в формате .xlsx';
-                dropArea.classList.remove('success');
-                dropArea.innerHTML = `
-                    <i class="fas fa-file-upload"></i>
-                    <h3>Перетащите файл или кликните для загрузки</h3>
-                    <p>Формат .xlsx</p>
-                `;
-            } else {
-                document.getElementById('error-message').style.display = 'none';
-                dropArea.classList.add('success');
-                dropArea.innerHTML = `✅ Файл загружен: ${fileName}`;
-            }
+        // Check if the response is successful (status in 200 range)
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        document.getElementById('file-input').addEventListener('change', function(e) {
-            handleFiles(e.target.files);
-        });
+        // Ensure the response is a blob (Excel file)
+        if (!response.headers.get('Content-Type').includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+            throw new Error('Expected an Excel file as a response.');
+        }
 
+        return response.blob(); // Expect a blob (Excel file) in response
+    })
+    .then(blob => {
+        console.log('Blob received:', blob); // Log the blob to make sure it's received correctly
+
+        // Create a URL for the blob
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'merged.xlsx'; // File name for the downloaded file
+        document.body.appendChild(a);
+        a.click(); // Trigger the download
+        window.URL.revokeObjectURL(url); // Clean up the URL object
+        hideLoader();
+    })
+    .catch(error => {
+        console.error('Error during file upload or processing:', error);
+        hideLoader(); // Hide loader in case of error
+    });
+});
+
+    function handleFiles(files) {
+        const file = files[0];
+        const fileName = file.name;
         const dropArea = document.getElementById('drop-area');
 
-        dropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropArea.classList.add('dragover');
-        });
+        if (!fileName.endsWith('.xlsx')) {
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('error-message').innerHTML = 
+                '❌ Ошибка: Пожалуйста, загрузите файл в формате .xlsx';
+            dropArea.classList.remove('success');
+            dropArea.innerHTML = `
+                <i class="fas fa-file-upload"></i>
+                <h3>Перетащите файл или кликните для загрузки</h3>
+                <p>Формат .xlsx</p>
+            `;
+        } else {
+            document.getElementById('error-message').style.display = 'none';
+            dropArea.classList.add('success');
+            dropArea.innerHTML = `✅ Файл загружен: ${fileName}`;
+        }
+    }
 
-        dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('dragover');
-        });
+    document.getElementById('file-input').addEventListener('change', function(e) {
+        handleFiles(e.target.files);
+    });
 
-        dropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            document.getElementById('file-input').files = files;
-            handleFiles(files);
-        });
-    </script>
+    const dropArea = document.getElementById('drop-area');
+
+    dropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropArea.classList.add('dragover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+        dropArea.classList.remove('dragover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        document.getElementById('file-input').files = files;
+        handleFiles(files);
+    });
+ </script>
 </body>
 </html>
