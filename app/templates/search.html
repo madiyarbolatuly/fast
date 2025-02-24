@@ -6,7 +6,7 @@
     <title>Поиск - Парсер цен</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    
     <style>
         :root {
             --primary-color: #2A5CAA;
@@ -228,36 +228,51 @@
     </div>
 
     <script>
-        const socket = io('http://localhost:8080');
-
-
         document.getElementById('searchForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const artikul = document.getElementById('artikul').value;
-            socket.emit('search_artikul', { artikul: artikul });
-            document.getElementById('loader').style.display = 'block';
-        });
-
-        socket.on('search_results', function(data) {
-            const resultsTable = document.getElementById('results-table').getElementsByTagName('tbody')[0];
-            resultsTable.innerHTML = ''; // Clear previous results
-
-            data.forEach(item => {
-                const row = resultsTable.insertRow();
-                const cell1 = row.insertCell(0);
-                const cell2 = row.insertCell(1);
-                const cell3 = row.insertCell(2);
-                cell1.textContent = item.artikul;
-                const link = document.createElement('a');
-                link.href = item.url;
-                link.textContent = item.url;
-                link.target = "_blank";
-                cell2.appendChild(link);
-                cell3.textContent = item.price;
+    
+            // Send POST request to /search route with Artikul data
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'artikul': artikul
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsTable = document.getElementById('results-table').getElementsByTagName('tbody')[0];
+                resultsTable.innerHTML = ''; // Clear previous results
+    
+                if (data.error) {
+                    const row = resultsTable.insertRow();
+                    const cell = row.insertCell(0);
+                    cell.textContent = data.error;
+                } else {
+                    data.results.forEach(item => {
+                        const row = resultsTable.insertRow();
+                        const cell1 = row.insertCell(0);
+                        const cell2 = row.insertCell(1);
+                        const cell3 = row.insertCell(2);
+                        cell1.textContent = item.Artikul;
+                        const link = document.createElement('a');
+                        link.href = item.URL;
+                        link.textContent = item.URL;
+                        link.target = "_blank";
+                        cell2.appendChild(link);
+                        cell3.textContent = item.Prices.join(', ') || 'Не найдено';  // In case multiple prices are scraped
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
             });
-
-            document.getElementById('loader').style.display = 'none';
         });
     </script>
+    
+    
 </body>
 </html>
